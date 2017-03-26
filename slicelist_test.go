@@ -111,6 +111,15 @@ func TestRemove(t *testing.T) {
 			return
 		}
 	}
+
+	// Now we want to check that the resize didn't break the ability to add.
+	for i := 0; i < max; i++ {
+		list.Add(IntElt(i))
+		if list.Len() != i+1 {
+			t.Error("Unable to add after removing all elements.")
+			return
+		}
+	}
 }
 
 func TestGet(t *testing.T) {
