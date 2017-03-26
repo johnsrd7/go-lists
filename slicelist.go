@@ -1,22 +1,35 @@
 package listcontainer
 
-import "sync"
+import (
+	"sync"
+)
 
 // SliceList is a simple type that implements the List interface.
 type SliceList struct {
-	backer     []ListElement
-	lock       *sync.Mutex
-	threadSafe bool
+	backer       []ListElement
+	lock         *sync.Mutex
+	threadSafe   bool
+	shrinkFactor float32
 }
 
 // MakeSliceList creates a new non-threadsafe SliceList.
 func MakeSliceList() *SliceList {
-	return &SliceList{[]ListElement{}, &sync.Mutex{}, false}
+	return &SliceList{[]ListElement{}, &sync.Mutex{}, false, 0.25}
 }
 
 // MakeSliceListThreadSafe creates a new threadsafe SliceList.
 func MakeSliceListThreadSafe() *SliceList {
-	return &SliceList{[]ListElement{}, &sync.Mutex{}, true}
+	return &SliceList{[]ListElement{}, &sync.Mutex{}, true, 0.25}
+}
+
+// Cap returns the capacity of the list.
+func (sl *SliceList) Cap() int {
+	if sl.threadSafe {
+		sl.lock.Lock()
+		defer sl.lock.Unlock()
+		return cap(sl.backer)
+	}
+	return cap(sl.backer)
 }
 
 // Len returns the number of elements in the list.
@@ -97,11 +110,18 @@ func (sl *SliceList) Remove(idx int) bool {
 func (sl *SliceList) removeHelper(idx int) {
 	sl.backer = append(sl.backer[:idx], sl.backer[idx+1:]...)
 
-	/*for i := idx; i < len(sl.backer)-1; i++ {
-		sl.backer[i] = sl.backer[i+1]
+	// We should check to see if we need to resize the slice. We don't
+	// want it to be the case that we added a ton of items then removed
+	// a bunch and now we are still holding onto the large backing array
+	// for the slice.
+	emptyFactor := float32(len(sl.backer)) / float32(cap(sl.backer))
+	if emptyFactor <= sl.shrinkFactor {
+		// Shrink the slice's capacity by 1/2
+		newCap := cap(sl.backer) / 2
+		newBacker := make([]ListElement, len(sl.backer), newCap)
+		copy(newBacker, sl.backer)
+		sl.backer = newBacker
 	}
-
-	sl.backer = sl.backer[:len(sl.backer)-1]*/
 }
 
 // Get returns the element at the given index.
