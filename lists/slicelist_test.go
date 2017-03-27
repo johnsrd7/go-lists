@@ -38,6 +38,10 @@ func TestMakeSliceList(t *testing.T) {
 	}
 }
 
+// -------------------------------------------------------
+// Test Container Methods
+// -------------------------------------------------------
+
 func TestLen(t *testing.T) {
 	list := MakeSliceList()
 
@@ -48,6 +52,36 @@ func TestLen(t *testing.T) {
 			t.Errorf("List should have length %d, actual length: %d", i+1, list.Len())
 			return
 		}
+	}
+}
+
+func TestIsEmpty(t *testing.T) {
+	list := MakeSliceList()
+
+	if !list.IsEmpty() {
+		t.Errorf("Empty list should return true for IsEmpty.\n")
+	}
+
+	list.Add(IntElt(0))
+	if list.IsEmpty() {
+		t.Errorf("List with 1 element should not return true for IsEmpty.\n")
+	}
+}
+
+func TestClear(t *testing.T) {
+	list := MakeSliceList()
+
+	for i := 0; i < 100; i++ {
+		list.Add(IntElt(i))
+	}
+
+	if list.Len() != 100 {
+		t.Errorf("Check Add/Len method, should have length of 100 after 100 adds.\n")
+	}
+
+	list.Clear()
+	if !list.IsEmpty() {
+		t.Errorf("List should be empty after call to Clear.\n")
 	}
 }
 
@@ -144,6 +178,10 @@ func TestRemove(t *testing.T) {
 	}
 }
 
+// -------------------------------------------------------
+// Test List Methods
+// -------------------------------------------------------
+
 func TestGet(t *testing.T) {
 	r := rand.New(rand.NewSource(99))
 
@@ -160,6 +198,23 @@ func TestGet(t *testing.T) {
 	for idx, v := range expected {
 		if !list.Get(idx).Equals(IntElt(v)) {
 			t.Errorf("Expected: %d, Actual: %v", v, list.Get(idx))
+			return
+		}
+	}
+}
+
+func TestSet(t *testing.T) {
+	list := MakeSliceList()
+
+	for i := 0; i < 100; i++ {
+		list.Add(IntElt(i))
+	}
+
+	for i := 0; i < 100; i++ {
+		list.Set(i, IntElt(i*2))
+
+		if !list.Get(i).Equals(IntElt(i * 2)) {
+			t.Errorf("Set did not set element at index %d properly. Expected: %v, Actual: %v\n", i, i*2, list.Get(i))
 			return
 		}
 	}
