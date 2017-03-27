@@ -59,7 +59,7 @@ func (sl *SliceList) IsEmpty() bool {
 	return sl.Len() == 0
 }
 
-// Clear clears out the list.
+// Clear removes all elements from the list.
 func (sl *SliceList) Clear() {
 	if sl.threadSafe {
 		sl.lock.Lock()
@@ -70,7 +70,7 @@ func (sl *SliceList) Clear() {
 	sl.backer = []adts.ContainerElement{}
 }
 
-// Contains returns whether the element is in the list.
+// Contains returns true if the given item is in the list.
 func (sl *SliceList) Contains(item adts.ContainerElement) bool {
 	if sl.threadSafe {
 		sl.lock.Lock()
@@ -81,9 +81,7 @@ func (sl *SliceList) Contains(item adts.ContainerElement) bool {
 	return sl.containsHelper(item)
 }
 
-// containsHelper returns whether the given element is in the list. Doesn't
-// check to see if the element is of the proper type. It is assumed that
-// the type check is done before the call to this method.
+// containsHelper returns whether the given element is in the list.
 func (sl *SliceList) containsHelper(item adts.ContainerElement) bool {
 	for _, i := range sl.backer {
 		if i.Equals(item) {
