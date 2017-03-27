@@ -1,18 +1,16 @@
-package listcontainer
+package listadts
 
 import (
+	"fmt"
 	"math/rand"
-	"reflect"
 	"testing"
+
+	adts "github.com/johnsrd7/go-adts"
 )
 
 type IntElt int
 
-func (i IntElt) TypeOf() reflect.Type {
-	return reflect.TypeOf(i)
-}
-
-func (i IntElt) Equals(j ListElement) bool {
+func (i IntElt) Equals(j adts.ContainerElement) bool {
 	if jElt, ok := j.(IntElt); ok {
 		return i == jElt
 	}
@@ -24,6 +22,19 @@ func TestMakeSliceList(t *testing.T) {
 
 	if len(list.backer) != 0 {
 		t.Error("Length of empty list should be 0")
+	}
+	if list.threadSafe {
+		t.Error("Threadsafe bool should not be set on default make call.")
+	}
+	if list.lock == nil {
+		t.Error("Lock should not be nil after make call.")
+	}
+
+	var l List
+	l = MakeSliceList()
+
+	if l.Len() != 0 {
+		t.Error("Length of empty list should be 0.")
 	}
 }
 
@@ -51,10 +62,21 @@ func TestAdd(t *testing.T) {
 
 		vals[v] = append(vals[v], i)
 
-		list.Add(IntElt(v))
+		if !list.Add(IntElt(v)) {
+			t.Errorf("Failed to add %d to list\n", v)
+			return
+		}
 
+		if len(list.backer) != i+1 {
+			t.Errorf("List size not correct. Expected: %d, Actual: %d", i+1, len(list.backer))
+			return
+		}
 		for v, idxs := range vals {
 			for _, idx := range idxs {
+				if idx >= len(list.backer) {
+					fmt.Printf("Idx: %d, Len: %d\n", idx, len(list.backer))
+					continue
+				}
 				if !list.backer[idx].Equals(IntElt(v)) {
 					t.Errorf("Add failed to add the value to the proper index | (idx,val) - Expected: (%d, %d), Actual: (%d, %v)",
 						idx, v, idx, list.backer[idx])
@@ -96,7 +118,7 @@ func TestRemove(t *testing.T) {
 	for i := 0; i < max; i++ {
 		idx := rand.Int31n(int32(max - i))
 		val := list.Get(int(idx))
-		if !list.Remove(int(idx)) {
+		if !list.Remove(val) {
 			t.Errorf("Failed to remove index %d from list.", idx)
 			return
 		}
