@@ -4,12 +4,22 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+
+	adts "github.com/johnsrd7/go-adts"
 )
 
-func TestMakeSliceList(t *testing.T) {
-	list := MakeSliceList()
+func printSinglyLinkedList(ll *SinglyLinkedList) {
+	for tmp := ll.head; tmp != nil; tmp = tmp.next {
+		fmt.Printf("%v -> ", tmp.elt)
+	}
 
-	if len(list.backer) != 0 {
+	fmt.Println()
+}
+
+func TestMakeSinglyLinkedList(t *testing.T) {
+	list := MakeSinglyLinkedList()
+
+	if list.len != 0 {
 		t.Error("Length of empty list should be 0")
 	}
 	if list.threadSafe {
@@ -20,7 +30,7 @@ func TestMakeSliceList(t *testing.T) {
 	}
 
 	var l List
-	l = MakeSliceList()
+	l = MakeSinglyLinkedList()
 
 	if l.Len() != 0 {
 		t.Error("Length of empty list should be 0.")
@@ -31,11 +41,11 @@ func TestMakeSliceList(t *testing.T) {
 // Test Container Methods
 // -------------------------------------------------------
 
-func TestSliceListLen(t *testing.T) {
-	list := MakeSliceList()
+func TestSinglyLinkedListLen(t *testing.T) {
+	list := MakeSinglyLinkedList()
 
 	for i := 0; i < 50; i++ {
-		list.backer = append(list.backer, intElt(i))
+		list.Add(intElt(i))
 
 		if list.Len() != i+1 {
 			t.Errorf("List should have length %d, actual length: %d", i+1, list.Len())
@@ -44,8 +54,8 @@ func TestSliceListLen(t *testing.T) {
 	}
 }
 
-func TestSliceListIsEmpty(t *testing.T) {
-	list := MakeSliceList()
+func TestSinglyLinkedListIsEmpty(t *testing.T) {
+	list := MakeSinglyLinkedList()
 
 	if !list.IsEmpty() {
 		t.Errorf("Empty list should return true for IsEmpty.\n")
@@ -57,8 +67,8 @@ func TestSliceListIsEmpty(t *testing.T) {
 	}
 }
 
-func TestSliceListClear(t *testing.T) {
-	list := MakeSliceList()
+func TestSinglyLinkedListClear(t *testing.T) {
+	list := MakeSinglyLinkedList()
 
 	for i := 0; i < 100; i++ {
 		list.Add(intElt(i))
@@ -74,46 +84,45 @@ func TestSliceListClear(t *testing.T) {
 	}
 }
 
-func TestSliceListAdd(t *testing.T) {
-	vals := make(map[int][]int) // value -> slice of indices
+func TestSinglyLinkedListAdd(t *testing.T) {
+	expected := []adts.ContainerElement{}
 	r := rand.New(rand.NewSource(99))
 
-	list := MakeSliceList()
+	list := MakeSinglyLinkedList()
 
 	for i := 0; i < 1000; i++ {
-		v := r.Int()
+		v := intElt(r.Int())
 
-		vals[v] = append(vals[v], i)
+		expected = append(expected, v)
 
-		if !list.Add(intElt(v)) {
+		if !list.Add(v) {
 			t.Errorf("Failed to add %d to list\n", v)
 			return
 		}
 
-		if len(list.backer) != i+1 {
-			t.Errorf("List size not correct. Expected: %d, Actual: %d", i+1, len(list.backer))
+		if list.Len() != i+1 {
+			t.Errorf("List size not correct. Expected: %d, Actual: %d", i+1, list.len)
 			return
 		}
-		for v, idxs := range vals {
-			for _, idx := range idxs {
-				if idx >= len(list.backer) {
-					fmt.Printf("Idx: %d, Len: %d\n", idx, len(list.backer))
-					continue
-				}
-				if !list.backer[idx].Equals(intElt(v)) {
-					t.Errorf("Add failed to add the value to the proper index | (idx,val) - Expected: (%d, %d), Actual: (%d, %v)",
-						idx, v, idx, list.backer[idx])
-				}
+
+		tmp := list.head
+		for idx, val := range expected {
+			if !tmp.elt.Equals(val) {
+				t.Errorf("Add failed to add the value to the proper index (%d) | (idx,val) - Expected: (%d, %v), Actual: (%d, %v)\n",
+					i, idx, val, idx, tmp.elt)
+				return
 			}
+
+			tmp = tmp.next
 		}
 	}
 }
 
-func TestSliceListContains(t *testing.T) {
+func TestSinglyLinkedListContains(t *testing.T) {
 	vals := make(map[int]bool)
 	r := rand.New(rand.NewSource(99))
 
-	list := MakeSliceList()
+	list := MakeSinglyLinkedList()
 
 	for i := 0; i < 1000; i++ {
 		v := r.Int()
@@ -130,10 +139,10 @@ func TestSliceListContains(t *testing.T) {
 	}
 }
 
-func TestSliceListRemove(t *testing.T) {
+func TestSinglyLinkedListRemove(t *testing.T) {
 	max := 1000
 
-	list := MakeSliceList()
+	list := MakeSinglyLinkedList()
 	for i := 0; i < max; i++ {
 		list.Add(intElt(i))
 	}
@@ -147,7 +156,7 @@ func TestSliceListRemove(t *testing.T) {
 		}
 
 		if list.Len() != max-1-i {
-			t.Errorf("Expected length: %d, Actual length: %d", max-1-i, list.Len())
+			t.Errorf("(%d) Expected length: %d, Actual length: %d", i, max-1-i, list.Len())
 			return
 		}
 
@@ -157,13 +166,8 @@ func TestSliceListRemove(t *testing.T) {
 		}
 	}
 
-	// Now we want to check that the resize didn't break the ability to add.
-	for i := 0; i < max; i++ {
-		list.Add(intElt(i))
-		if list.Len() != i+1 {
-			t.Error("Unable to add after removing all elements.")
-			return
-		}
+	if list.Len() != 0 {
+		t.Error("Length of list should be 0 after all elements are removed.\n")
 	}
 }
 
@@ -171,11 +175,11 @@ func TestSliceListRemove(t *testing.T) {
 // Test List Methods
 // -------------------------------------------------------
 
-func TestSliceListGet(t *testing.T) {
+func TestGet(t *testing.T) {
 	r := rand.New(rand.NewSource(99))
 
 	expected := []int{}
-	list := MakeSliceList()
+	list := MakeSinglyLinkedList()
 
 	for i := 0; i < 1000; i++ {
 		v := r.Int()
@@ -192,8 +196,8 @@ func TestSliceListGet(t *testing.T) {
 	}
 }
 
-func TestSliceListSet(t *testing.T) {
-	list := MakeSliceList()
+func TestSet(t *testing.T) {
+	list := MakeSinglyLinkedList()
 
 	for i := 0; i < 100; i++ {
 		list.Add(intElt(i))
