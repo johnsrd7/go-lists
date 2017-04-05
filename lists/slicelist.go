@@ -50,12 +50,6 @@ func (sl *SliceList) Len() int {
 
 // IsEmpty returns if the list is empty or not.
 func (sl *SliceList) IsEmpty() bool {
-	if sl.threadSafe {
-		sl.lock.Lock()
-		defer sl.lock.Unlock()
-		return sl.Len() == 0
-	}
-
 	return sl.Len() == 0
 }
 
@@ -65,6 +59,7 @@ func (sl *SliceList) Clear() {
 		sl.lock.Lock()
 		defer sl.lock.Unlock()
 		sl.backer = []adts.ContainerElement{}
+		return
 	}
 
 	sl.backer = []adts.ContainerElement{}
