@@ -45,8 +45,7 @@ func (ss *SliceStack) Contains(item adts.ContainerElement) bool {
 
 // Add returns true if the given element was added to the top of the stack.
 func (ss *SliceStack) Add(item adts.ContainerElement) bool {
-	ss.Push(item)
-	return true
+	return ss.backer.Add(item)
 }
 
 // Remove is a non-valid function for the Stack interface. It is only provided here
@@ -62,42 +61,28 @@ func (ss *SliceStack) Remove(item adts.ContainerElement) bool {
 
 // Push pushes the given element onto the top of the stack.
 func (ss *SliceStack) Push(item adts.ContainerElement) {
-	if ss.backer.ThreadSafe {
-		ss.backer.Lock.Lock()
-		defer ss.backer.Lock.Unlock()
-		ss.backer.Backer = append(ss.backer.Backer, item)
-		return
+	if !ss.Add(item) {
+		panic("Unable to push the given item to the top of the stack.")
 	}
-
-	ss.backer.Backer = append(ss.backer.Backer, item)
 }
 
 // Pop removes the top element from the stack and returns the element.
 func (ss *SliceStack) Pop() adts.ContainerElement {
+	// We want to reuse the Remove method from the SliceContainer class.
+	// The problem is that we need to get the last element in a threadsafe way
+	// (if needed) and then call remove. However, if we lock and then call
+	// Remove, that will also lock, which causes a deadlock. So we need to
+	// do our own locking here and then remove the element and then unlock.
+
+	var lastElt adts.ContainerElement
 	if ss.backer.ThreadSafe {
 		ss.backer.Lock.Lock()
-		defer ss.backer.Lock.Unlock()
-		return ss.popHelper()
-	}
-
-	return ss.popHelper()
-}
-
-func (ss *SliceStack) popHelper() adts.ContainerElement {
-	lastElt := ss.backer.Backer[len(ss.backer.Backer)-1]
-	ss.backer.Backer = ss.backer.Backer[:len(ss.backer.Backer)-1]
-
-	// We should check to see if we need to resize the slice. We don't
-	// want it to be the case that we added a ton of items then removed
-	// a bunch and now we are still holding onto the large backing array
-	// for the slice.
-	emptyFactor := float32(len(ss.backer.Backer)) / float32(cap(ss.backer.Backer))
-	if emptyFactor <= ss.backer.ShrinkFactor {
-		// Shrink the slice's capacity by 1/2
-		newCap := cap(ss.backer.Backer) / 2
-		newBacker := make([]adts.ContainerElement, len(ss.backer.Backer), newCap)
-		copy(newBacker, ss.backer.Backer)
-		ss.backer.Backer = newBacker
+		lastElt = ss.backer.Backer[len(ss.backer.Backer)-1]
+		ss.backer.RemoveAtIndex(len(ss.backer.Backer) - 1)
+		ss.backer.Lock.Unlock()
+	} else {
+		lastElt = ss.backer.Backer[len(ss.backer.Backer)-1]
+		ss.backer.RemoveAtIndex(len(ss.backer.Backer) - 1)
 	}
 
 	return lastElt
