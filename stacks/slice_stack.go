@@ -86,20 +86,20 @@ func (ss *SliceStack) Add(item adts.ContainerElement) bool {
 // as a means to satisfy the Container interface. See Pop function for Stack to remove
 // elements from the stack.
 func (ss *SliceStack) Remove(item adts.ContainerElement) bool {
-	if sl.threadSafe {
-		sl.lock.Lock()
-		defer sl.lock.Unlock()
-		idx := sl.findHelper(item)
+	if ss.threadSafe {
+		ss.lock.Lock()
+		defer ss.lock.Unlock()
+		idx := ss.findHelper(item)
 		if idx < 0 {
 			return false
 		}
-		sl.removeHelper(idx)
+		ss.removeHelper(idx)
 	} else {
-		idx := sl.findHelper(item)
+		idx := ss.findHelper(item)
 		if idx < 0 {
 			return false
 		}
-		sl.removeHelper(idx)
+		ss.removeHelper(idx)
 	}
 
 	return true
@@ -108,7 +108,7 @@ func (ss *SliceStack) Remove(item adts.ContainerElement) bool {
 // findHelper searches the list for the given element and returns the index
 // of the item in the list. If the item doesn't exist in the list, then -1
 // is returned.
-func (ss *SliceStack) findHelper(item adts.ContainerHelper) int {
+func (ss *SliceStack) findHelper(item adts.ContainerElement) int {
 	for idx, val := range ss.backer {
 		if item.Equals(val) {
 			return idx
@@ -134,6 +134,8 @@ func (ss *SliceStack) removeHelper(idx int) bool {
 		copy(newBacker, ss.backer)
 		ss.backer = newBacker
 	}
+
+	return true
 }
 
 // -------------------------------------------------------
