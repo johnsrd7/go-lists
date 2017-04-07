@@ -1,27 +1,22 @@
 package stackadts
 
 import (
-	"sync"
-
 	adts "github.com/johnsrd7/go-adts"
 )
 
 // SliceStack is a simple type that implements the Stack interface (both threadsafe and not).
 type SliceStack struct {
-	backer       []adts.ContainerElement
-	lock         *sync.Mutex
-	threadSafe   bool
-	shrinkFactor float32
+	backer *adts.SliceContainer
 }
 
 // MakeSliceStack creates a non-threadsafe SliceStack
 func MakeSliceStack() *SliceStack {
-	return &SliceStack{[]adts.ContainerElement{}, &sync.Mutex{}, false, 0.25}
+	return &SliceStack{adts.MakeSliceContainer()}
 }
 
 // MakeSliceStackThreadSafe creates a threadsafe SliceStack
 func MakeSliceStackThreadSafe() *SliceStack {
-	return &SliceStack{[]adts.ContainerElement{}, &sync.Mutex{}, true, 0.25}
+	return &SliceStack{adts.MakeSliceContainerThreadSafe()}
 }
 
 // -------------------------------------------------------
@@ -30,50 +25,22 @@ func MakeSliceStackThreadSafe() *SliceStack {
 
 // Len returns the number of elements in the stack.
 func (ss *SliceStack) Len() int {
-	if ss.threadSafe {
-		ss.lock.Lock()
-		defer ss.lock.Unlock()
-		return len(ss.backer)
-	}
-	return len(ss.backer)
+	return ss.backer.Len()
 }
 
 // IsEmpty returns if the stack is empty or not.
 func (ss *SliceStack) IsEmpty() bool {
-	return ss.Len() == 0
+	return ss.backer.Len() == 0
 }
 
 // Clear removes all elements from the stack.
 func (ss *SliceStack) Clear() {
-	if ss.threadSafe {
-		ss.lock.Lock()
-		defer ss.lock.Unlock()
-		ss.backer = []adts.ContainerElement{}
-		return
-	}
-
-	ss.backer = []adts.ContainerElement{}
+	ss.backer.Clear()
 }
 
 // Contains returns true if the given item is in the stack.
 func (ss *SliceStack) Contains(item adts.ContainerElement) bool {
-	if ss.threadSafe {
-		ss.lock.Lock()
-		defer ss.lock.Unlock()
-		return ss.containsHelper(item)
-	}
-
-	return ss.containsHelper(item)
-}
-
-func (ss *SliceStack) containsHelper(item adts.ContainerElement) bool {
-	for _, i := range ss.backer {
-		if i.Equals(item) {
-			return true
-		}
-	}
-
-	return false
+	return ss.backer.Contains(item)
 }
 
 // Add returns true if the given element was added to the top of the stack.
@@ -86,56 +53,7 @@ func (ss *SliceStack) Add(item adts.ContainerElement) bool {
 // as a means to satisfy the Container interface. See Pop function for Stack to remove
 // elements from the stack.
 func (ss *SliceStack) Remove(item adts.ContainerElement) bool {
-	if ss.threadSafe {
-		ss.lock.Lock()
-		defer ss.lock.Unlock()
-		idx := ss.findHelper(item)
-		if idx < 0 {
-			return false
-		}
-		ss.removeHelper(idx)
-	} else {
-		idx := ss.findHelper(item)
-		if idx < 0 {
-			return false
-		}
-		ss.removeHelper(idx)
-	}
-
-	return true
-}
-
-// findHelper searches the list for the given element and returns the index
-// of the item in the list. If the item doesn't exist in the list, then -1
-// is returned.
-func (ss *SliceStack) findHelper(item adts.ContainerElement) int {
-	for idx, val := range ss.backer {
-		if item.Equals(val) {
-			return idx
-		}
-	}
-
-	return -1
-}
-
-// removeHelper removes the element at the given idx.
-func (ss *SliceStack) removeHelper(idx int) bool {
-	ss.backer = append(ss.backer[:idx], ss.backer[idx+1:]...)
-
-	// We should check to see if we need to resize the slice. We don't
-	// want it to be the case that we added a ton of items then removed
-	// a bunch and now we are still holding onto the large backing array
-	// for the slice.
-	emptyFactor := float32(len(ss.backer)) / float32(cap(ss.backer))
-	if emptyFactor <= ss.shrinkFactor {
-		// Shrink the slice's capacity by 1/2
-		newCap := cap(ss.backer) / 2
-		newBacker := make([]adts.ContainerElement, len(ss.backer), newCap)
-		copy(newBacker, ss.backer)
-		ss.backer = newBacker
-	}
-
-	return true
+	return ss.backer.Remove(item)
 }
 
 // -------------------------------------------------------
@@ -144,21 +62,21 @@ func (ss *SliceStack) removeHelper(idx int) bool {
 
 // Push pushes the given element onto the top of the stack.
 func (ss *SliceStack) Push(item adts.ContainerElement) {
-	if ss.threadSafe {
-		ss.lock.Lock()
-		defer ss.lock.Unlock()
-		ss.backer = append(ss.backer, item)
+	if ss.backer.ThreadSafe {
+		ss.backer.Lock.Lock()
+		defer ss.backer.Lock.Unlock()
+		ss.backer.Backer = append(ss.backer.Backer, item)
 		return
 	}
 
-	ss.backer = append(ss.backer, item)
+	ss.backer.Backer = append(ss.backer.Backer, item)
 }
 
 // Pop removes the top element from the stack and returns the element.
 func (ss *SliceStack) Pop() adts.ContainerElement {
-	if ss.threadSafe {
-		ss.lock.Lock()
-		defer ss.lock.Unlock()
+	if ss.backer.ThreadSafe {
+		ss.backer.Lock.Lock()
+		defer ss.backer.Lock.Unlock()
 		return ss.popHelper()
 	}
 
@@ -166,20 +84,20 @@ func (ss *SliceStack) Pop() adts.ContainerElement {
 }
 
 func (ss *SliceStack) popHelper() adts.ContainerElement {
-	lastElt := ss.backer[len(ss.backer)-1]
-	ss.backer = ss.backer[:len(ss.backer)-1]
+	lastElt := ss.backer.Backer[len(ss.backer.Backer)-1]
+	ss.backer.Backer = ss.backer.Backer[:len(ss.backer.Backer)-1]
 
 	// We should check to see if we need to resize the slice. We don't
 	// want it to be the case that we added a ton of items then removed
 	// a bunch and now we are still holding onto the large backing array
 	// for the slice.
-	emptyFactor := float32(len(ss.backer)) / float32(cap(ss.backer))
-	if emptyFactor <= ss.shrinkFactor {
+	emptyFactor := float32(len(ss.backer.Backer)) / float32(cap(ss.backer.Backer))
+	if emptyFactor <= ss.backer.ShrinkFactor {
 		// Shrink the slice's capacity by 1/2
-		newCap := cap(ss.backer) / 2
-		newBacker := make([]adts.ContainerElement, len(ss.backer), newCap)
-		copy(newBacker, ss.backer)
-		ss.backer = newBacker
+		newCap := cap(ss.backer.Backer) / 2
+		newBacker := make([]adts.ContainerElement, len(ss.backer.Backer), newCap)
+		copy(newBacker, ss.backer.Backer)
+		ss.backer.Backer = newBacker
 	}
 
 	return lastElt

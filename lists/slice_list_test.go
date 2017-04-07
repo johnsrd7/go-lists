@@ -1,7 +1,6 @@
 package listadts
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 
@@ -11,14 +10,8 @@ import (
 func TestMakeSliceList(t *testing.T) {
 	list := MakeSliceList()
 
-	if len(list.backer) != 0 {
-		t.Error("Length of empty list should be 0")
-	}
-	if list.threadSafe {
-		t.Error("Threadsafe bool should not be set on default make call.")
-	}
-	if list.lock == nil {
-		t.Error("Lock should not be nil after make call.")
+	if list.backer == nil {
+		t.Error("Backing container should not be nil.")
 	}
 
 	var l List
@@ -37,7 +30,7 @@ func TestSliceListLen(t *testing.T) {
 	list := MakeSliceList()
 
 	for i := 0; i < 50; i++ {
-		list.backer = append(list.backer, adts.IntElt(i))
+		list.Add(adts.IntElt(i))
 
 		if list.Len() != i+1 {
 			t.Errorf("List should have length %d, actual length: %d", i+1, list.Len())
@@ -77,7 +70,7 @@ func TestSliceListClear(t *testing.T) {
 }
 
 func TestSliceListAdd(t *testing.T) {
-	vals := make(map[int][]int) // value -> slice of indices
+	vals := []int{}
 	r := rand.New(rand.NewSource(99))
 
 	list := MakeSliceList()
@@ -85,27 +78,21 @@ func TestSliceListAdd(t *testing.T) {
 	for i := 0; i < 1000; i++ {
 		v := r.Int()
 
-		vals[v] = append(vals[v], i)
+		vals = append(vals, v)
 
 		if !list.Add(adts.IntElt(v)) {
 			t.Errorf("Failed to add %d to list\n", v)
 			return
 		}
 
-		if len(list.backer) != i+1 {
-			t.Errorf("List size not correct. Expected: %d, Actual: %d", i+1, len(list.backer))
+		if list.Len() != i+1 {
+			t.Errorf("List size not correct. Expected: %d, Actual: %d", i+1, list.Len())
 			return
 		}
-		for v, idxs := range vals {
-			for _, idx := range idxs {
-				if idx >= len(list.backer) {
-					fmt.Printf("Idx: %d, Len: %d\n", idx, len(list.backer))
-					continue
-				}
-				if !list.backer[idx].Equals(adts.IntElt(v)) {
-					t.Errorf("Add failed to add the value to the proper index | (idx,val) - Expected: (%d, %d), Actual: (%d, %v)",
-						idx, v, idx, list.backer[idx])
-				}
+		for idx, v := range vals {
+			if !list.Get(idx).Equals(adts.IntElt(v)) {
+				t.Errorf("Add failed to add the value to the proper index | (idx,val) - Expected: (%d, %d), Actual: (%d, %v)",
+					idx, v, idx, list.Get(idx))
 			}
 		}
 	}

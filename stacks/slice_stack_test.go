@@ -10,14 +10,8 @@ import (
 func TestMakeSliceStack(t *testing.T) {
 	stack := MakeSliceStack()
 
-	if len(stack.backer) != 0 {
-		t.Error("Length of empty stack should be 0")
-	}
-	if stack.threadSafe {
-		t.Error("Threadsafe bool should not be set on default make call.")
-	}
-	if stack.lock == nil {
-		t.Error("Lock should not be nil after make call.")
+	if stack.backer == nil {
+		t.Error("Backing Container should not be nil after make call.")
 	}
 
 	var s Stack
@@ -36,7 +30,7 @@ func TestSliceStackLen(t *testing.T) {
 	stack := MakeSliceStack()
 
 	for i := 0; i < 50; i++ {
-		stack.backer = append(stack.backer, adts.IntElt(i))
+		stack.Add(adts.IntElt(i))
 
 		if stack.Len() != i+1 {
 			t.Errorf("Stack should have length %d, actual length: %d", i+1, stack.Len())
@@ -91,14 +85,14 @@ func TestSliceStackAdd(t *testing.T) {
 			return
 		}
 
-		if len(stack.backer) != i+1 {
-			t.Errorf("Stack size not correct. Expected: %d, Actual: %d", i+1, len(stack.backer))
+		if stack.Len() != i+1 {
+			t.Errorf("Stack size not correct. Expected: %d, Actual: %d", i+1, stack.Len())
 			return
 		}
 		for idx, v := range vals {
-			if !stack.backer[idx].Equals(adts.IntElt(v)) {
+			if !stack.backer.Backer[idx].Equals(adts.IntElt(v)) {
 				t.Errorf("Add failed to add the value to the proper index | (idx,val) - Expected: (%d, %d), Actual: (%d, %v)",
-					idx, v, idx, stack.backer[idx])
+					idx, v, idx, stack.backer.Backer[idx])
 			}
 
 		}
@@ -136,7 +130,7 @@ func TestSliceStackRemove(t *testing.T) {
 
 	for i := 0; i < max; i++ {
 		idx := rand.Int31n(int32(max - i))
-		val := stack.backer[idx]
+		val := stack.backer.Backer[idx]
 		if !stack.Remove(val) {
 			t.Errorf("Failed to remove index %d from list.", idx)
 			return
@@ -185,7 +179,7 @@ func TestSliceStackPush(t *testing.T) {
 			return
 		}
 		for idx, exp := range expected {
-			act := stack.backer[idx]
+			act := stack.backer.Backer[idx]
 			if !act.Equals(adts.IntElt(exp)) {
 				t.Errorf("Stack order was ruined by push. (idx, val) - Expected: (%d, %d), Actual: (%d, %v)",
 					idx, exp, idx, act)
