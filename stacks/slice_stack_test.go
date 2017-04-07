@@ -3,6 +3,8 @@ package stackadts
 import (
 	"math/rand"
 	"testing"
+
+	adts "github.com/johnsrd7/go-adts"
 )
 
 func TestMakeSliceStack(t *testing.T) {
@@ -34,7 +36,7 @@ func TestSliceStackLen(t *testing.T) {
 	stack := MakeSliceStack()
 
 	for i := 0; i < 50; i++ {
-		stack.backer = append(stack.backer, intElt(i))
+		stack.backer = append(stack.backer, adts.IntElt(i))
 
 		if stack.Len() != i+1 {
 			t.Errorf("Stack should have length %d, actual length: %d", i+1, stack.Len())
@@ -50,7 +52,7 @@ func TestSliceStackIsEmpty(t *testing.T) {
 		t.Errorf("Empty stack should return true for IsEmpty.\n")
 	}
 
-	stack.Add(intElt(0))
+	stack.Add(adts.IntElt(0))
 	if stack.IsEmpty() {
 		t.Errorf("Stack with 1 element should not return true for IsEmpty.\n")
 	}
@@ -60,7 +62,7 @@ func TestSliceStackClear(t *testing.T) {
 	stack := MakeSliceStack()
 
 	for i := 0; i < 100; i++ {
-		stack.Add(intElt(i))
+		stack.Add(adts.IntElt(i))
 	}
 
 	if stack.Len() != 100 {
@@ -84,7 +86,7 @@ func TestSliceStackAdd(t *testing.T) {
 
 		vals = append(vals, v)
 
-		if !stack.Add(intElt(v)) {
+		if !stack.Add(adts.IntElt(v)) {
 			t.Errorf("Failed to add %d to list\n", v)
 			return
 		}
@@ -94,7 +96,7 @@ func TestSliceStackAdd(t *testing.T) {
 			return
 		}
 		for idx, v := range vals {
-			if !stack.backer[idx].Equals(intElt(v)) {
+			if !stack.backer[idx].Equals(adts.IntElt(v)) {
 				t.Errorf("Add failed to add the value to the proper index | (idx,val) - Expected: (%d, %d), Actual: (%d, %v)",
 					idx, v, idx, stack.backer[idx])
 			}
@@ -114,10 +116,10 @@ func TestSliceStackContains(t *testing.T) {
 
 		vals[v] = true
 
-		stack.Add(intElt(v))
+		stack.Add(adts.IntElt(v))
 
 		for v := range vals {
-			if !stack.Contains(intElt(v)) {
+			if !stack.Contains(adts.IntElt(v)) {
 				t.Errorf("Contains failed to find the value (%d) in the list.", v)
 			}
 		}
@@ -129,7 +131,7 @@ func TestSliceStackRemove(t *testing.T) {
 
 	stack := MakeSliceStack()
 	for i := 0; i < max; i++ {
-		stack.Add(intElt(i))
+		stack.Add(adts.IntElt(i))
 	}
 
 	for i := 0; i < max; i++ {
@@ -153,7 +155,7 @@ func TestSliceStackRemove(t *testing.T) {
 
 	// Now we want to check that the resize didn't break the ability to add.
 	for i := 0; i < max; i++ {
-		stack.Add(intElt(i))
+		stack.Add(adts.IntElt(i))
 		if stack.Len() != i+1 {
 			t.Error("Unable to add after removing all elements.")
 			return
@@ -175,7 +177,7 @@ func TestSliceStackPush(t *testing.T) {
 		v := r.Int()
 
 		expected = append(expected, v)
-		stack.Push(intElt(v))
+		stack.Push(adts.IntElt(v))
 
 		if stack.Len() != len(expected) {
 			t.Errorf("Push didn't add the element properly to the stack. Expected len: %d, Actual len: %d",
@@ -184,7 +186,7 @@ func TestSliceStackPush(t *testing.T) {
 		}
 		for idx, exp := range expected {
 			act := stack.backer[idx]
-			if !act.Equals(intElt(exp)) {
+			if !act.Equals(adts.IntElt(exp)) {
 				t.Errorf("Stack order was ruined by push. (idx, val) - Expected: (%d, %d), Actual: (%d, %v)",
 					idx, exp, idx, act)
 				return
@@ -198,13 +200,13 @@ func TestSliceStackPop(t *testing.T) {
 	stack := MakeSliceStack()
 
 	for i := 0; i < 100; i++ {
-		stack.Push(intElt(i))
+		stack.Push(adts.IntElt(i))
 	}
 
 	for i := 0; i < 100; i++ {
 		popped := stack.Pop()
 
-		if !popped.Equals(intElt(100 - i - 1)) {
+		if !popped.Equals(adts.IntElt(100 - i - 1)) {
 			t.Errorf("Pop didn't return the proper element. Expected: %v, Actual: %v\n", 100-i-1, popped)
 			return
 		}
