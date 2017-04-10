@@ -8,6 +8,7 @@ Go Implementations for data structures.
 	- SinglyLinkedList (Threadsafe and non-threadsafe)
   - [Stacks](#stacks)
     - SliceStack (Threadsafe and non-threadsafe)
+	- ListStack (Threadsafe and non-threadsafe) **Untested currently**
 
 ## Containers
 The following is the basic Container interface used by many of the data structures.
