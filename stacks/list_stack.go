@@ -33,10 +33,10 @@ func (ls *ListStack) Len() int {
 	if ls.threadSafe {
 		ls.lock.Lock()
 		defer ls.lock.Unlock()
-		return ls.Len()
+		return ls.backer.Len()
 	}
 
-	return ls.Len()
+	return ls.backer.Len()
 }
 
 // IsEmpty returns if the stack is empty or not.
