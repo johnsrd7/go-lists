@@ -11,6 +11,8 @@ Go Implementations for data structures (both threadsafe and non-threadsafe).
   - [Stacks](#stacks)
     - SliceStack (Threadsafe and non-threadsafe)
 	- ListStack (Threadsafe and non-threadsafe)
+  - [Queues](#queues)
+    - SliceQueue (Threadsafe and non-threadsafe)
 
 ## Containers
 The following is the basic Container interface used by many of the data structures.
@@ -46,8 +48,19 @@ type List interface {
 The following is the basic Stack interface used by the stack data structures.
 ```go
 type Stack interface {
-	Push(ContainerElement)
-	Pop() ContainerElement
+	Push(ContainerElement) bool
+	Pop() (ContainerElement, bool)
+	
+	Container
+}
+```
+
+## Queues
+The following is the basic Queue interface used by the queue data structures.
+```go
+type Queue interface {
+	Push(ContainerElement) bool
+	Pop() (ContainerElement, bool)
 	
 	Container
 }

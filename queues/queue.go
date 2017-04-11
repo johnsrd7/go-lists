@@ -1,9 +1,9 @@
-package stackadts
+package queueadts
 
 import adts "github.com/johnsrd7/go-adts"
 
-// Stack is a common interface for the Stack ADT.
-type Stack interface {
+// Queue is a common interface for the Queue ADT.
+type Queue interface {
 	Push(adts.ContainerElement) bool
 	Pop() (adts.ContainerElement, bool)
 
