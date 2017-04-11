@@ -1,5 +1,7 @@
 # GO ADTS
-Go Implementations for data structures.
+Go Implementations for data structures (both threadsafe and non-threadsafe).
+
+**Currently threadsafe is untested. Use at your own risk.**
 
 ## Data Structures
 - [Containers](#containers)
@@ -8,7 +10,7 @@ Go Implementations for data structures.
 	- SinglyLinkedList (Threadsafe and non-threadsafe)
   - [Stacks](#stacks)
     - SliceStack (Threadsafe and non-threadsafe)
-	- ListStack (Threadsafe and non-threadsafe) **Untested currently**
+	- ListStack (Threadsafe and non-threadsafe)
 
 ## Containers
 The following is the basic Container interface used by many of the data structures.
