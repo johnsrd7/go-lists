@@ -48,9 +48,7 @@ func (ss *SliceStack) Add(item adts.ContainerElement) bool {
 	return ss.backer.Add(item)
 }
 
-// Remove is a non-valid function for the Stack interface. It is only provided here
-// as a means to satisfy the Container interface. See Pop function for Stack to remove
-// elements from the stack.
+// Remove returns true if the given element was removed.
 func (ss *SliceStack) Remove(item adts.ContainerElement) bool {
 	return ss.backer.Remove(item)
 }
@@ -60,30 +58,35 @@ func (ss *SliceStack) Remove(item adts.ContainerElement) bool {
 // -------------------------------------------------------
 
 // Push pushes the given element onto the top of the stack.
-func (ss *SliceStack) Push(item adts.ContainerElement) {
-	if !ss.Add(item) {
-		panic("Unable to push the given item to the top of the stack.")
-	}
+func (ss *SliceStack) Push(item adts.ContainerElement) bool {
+	return ss.Add(item)
 }
 
 // Pop removes the top element from the stack and returns the element.
-func (ss *SliceStack) Pop() adts.ContainerElement {
+func (ss *SliceStack) Pop() (adts.ContainerElement, bool) {
 	// We want to reuse the Remove method from the SliceContainer class.
 	// The problem is that we need to get the last element in a threadsafe way
 	// (if needed) and then call remove. However, if we lock and then call
 	// Remove, that will also lock, which causes a deadlock. So we need to
 	// do our own locking here and then remove the element and then unlock.
+	if ss.Len() == 0 {
+		return adts.EmptyContainerElement{}, false
+	}
 
 	var lastElt adts.ContainerElement
 	if ss.backer.ThreadSafe {
 		ss.backer.Lock.Lock()
+		defer ss.backer.Lock.Unlock()
 		lastElt = ss.backer.Backer[len(ss.backer.Backer)-1]
-		ss.backer.RemoveAtIndex(len(ss.backer.Backer) - 1)
-		ss.backer.Lock.Unlock()
+		if !ss.backer.RemoveAtIndex(len(ss.backer.Backer) - 1) {
+			return adts.EmptyContainerElement{}, false
+		}
 	} else {
 		lastElt = ss.backer.Backer[len(ss.backer.Backer)-1]
-		ss.backer.RemoveAtIndex(len(ss.backer.Backer) - 1)
+		if !ss.backer.RemoveAtIndex(len(ss.backer.Backer) - 1) {
+			return adts.EmptyContainerElement{}, false
+		}
 	}
 
-	return lastElt
+	return lastElt, true
 }

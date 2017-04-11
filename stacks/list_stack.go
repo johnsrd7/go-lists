@@ -91,9 +91,7 @@ func (ls *ListStack) Add(item adts.ContainerElement) bool {
 	return ls.backer.PushFront(item) != nil
 }
 
-// Remove is a non-valid function for the Stack interface. It is only provided here
-// as a means to satisfy the Container interface. See Pop function for Stack to remove
-// elements from the stack.
+// Remove returns true if the given element was removed.
 func (ls *ListStack) Remove(item adts.ContainerElement) bool {
 	if ls.threadSafe {
 		ls.lock.Lock()
@@ -122,14 +120,12 @@ func (ls *ListStack) removeHelper(item adts.ContainerElement) bool {
 // -------------------------------------------------------
 
 // Push pushes the given element onto the top of the stack.
-func (ls *ListStack) Push(item adts.ContainerElement) {
-	if !ls.Add(item) {
-		panic("Unable to push the given item to the top of the stack.")
-	}
+func (ls *ListStack) Push(item adts.ContainerElement) bool {
+	return ls.Add(item)
 }
 
 // Pop removes the top element from the stack and returns the element.
-func (ls *ListStack) Pop() adts.ContainerElement {
+func (ls *ListStack) Pop() (adts.ContainerElement, bool) {
 	if ls.threadSafe {
 		ls.lock.Lock()
 		defer ls.lock.Unlock()
@@ -140,17 +136,17 @@ func (ls *ListStack) Pop() adts.ContainerElement {
 }
 
 // popHelper removes the element from the front of the list and returns the element.
-func (ls *ListStack) popHelper() adts.ContainerElement {
+func (ls *ListStack) popHelper() (adts.ContainerElement, bool) {
 	// Have to use list.List's Len function since we might already
 	// be inside a lock and we don't want to deadlock.
 	if ls.backer.Len() == 0 {
-		panic("Can't pop from an empty stack.")
+		return adts.EmptyContainerElement{}, false
 	}
 
 	if lastElt, ok := ls.backer.Front().Value.(adts.ContainerElement); ok {
 		ls.backer.Remove(ls.backer.Front())
-		return lastElt
+		return lastElt, true
 	}
 
-	panic("Unable to pop element from top of stack.")
+	return adts.EmptyContainerElement{}, false
 }

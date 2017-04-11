@@ -84,8 +84,7 @@ func (sc *SliceContainer) Add(item ContainerElement) bool {
 	return true
 }
 
-// Remove removes the element at the given index and
-// returns whether the removal was successful.
+// Remove returns true if the given element was removed.
 func (sc *SliceContainer) Remove(item ContainerElement) bool {
 	if sc.ThreadSafe {
 		sc.Lock.Lock()
@@ -120,7 +119,11 @@ func (sc *SliceContainer) findHelper(item ContainerElement) int {
 }
 
 // RemoveAtIndex removes the element at the given idx.
-func (sc *SliceContainer) RemoveAtIndex(idx int) {
+func (sc *SliceContainer) RemoveAtIndex(idx int) bool {
+	if idx < 0 || idx > len(sc.Backer) {
+		return false
+	}
+
 	sc.Backer = append(sc.Backer[:idx], sc.Backer[idx+1:]...)
 
 	// We should check to see if we need to resize the slice. We don't
@@ -135,4 +138,6 @@ func (sc *SliceContainer) RemoveAtIndex(idx int) {
 		copy(newBacker, sc.Backer)
 		sc.Backer = newBacker
 	}
+
+	return true
 }

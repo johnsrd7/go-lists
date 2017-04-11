@@ -188,7 +188,10 @@ func TestListStackPush(t *testing.T) {
 		v := r.Int()
 
 		expected = append(expected, v)
-		stack.Push(adts.IntElt(v))
+		if !stack.Push(adts.IntElt(v)) {
+			t.Errorf("Push didn't succeed for push #%d\n", i+1)
+			return
+		}
 
 		if stack.Len() != len(expected) {
 			t.Errorf("Push didn't add the element properly to the stack. Expected len: %d, Actual len: %d",
@@ -219,12 +222,21 @@ func TestListStackPop(t *testing.T) {
 	}
 
 	for i := 0; i < 100; i++ {
-		popped := stack.Pop()
+		popped, ok := stack.Pop()
+		if !ok {
+			t.Errorf("Pop didn't succeed for pop #%d\n", i+1)
+			return
+		}
 
 		if !popped.Equals(adts.IntElt(100 - i - 1)) {
 			t.Errorf("Pop didn't return the proper element. Expected: %v, Actual: %v\n", 100-i-1, popped)
 			return
 		}
+	}
+
+	_, ok := stack.Pop()
+	if ok {
+		t.Errorf("Pop should not succeed for empty stack.\n")
 	}
 }
 
