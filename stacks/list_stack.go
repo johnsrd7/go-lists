@@ -41,7 +41,7 @@ func (ls *ListStack) Len() int {
 
 // IsEmpty returns if the stack is empty or not.
 func (ls *ListStack) IsEmpty() bool {
-	return ls.backer.Len() == 0
+	return ls.Len() == 0
 }
 
 // Clear removes all elements from the stack.
