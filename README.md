@@ -13,6 +13,7 @@ Go Implementations for data structures (both threadsafe and non-threadsafe).
 	- ListStack (Threadsafe and non-threadsafe)
   - [Queues](#queues)
     - SliceQueue (Threadsafe and non-threadsafe)
+	- ListQueue (Threadsafe and non-threadsafe)
 
 ## Containers
 The following is the basic Container interface used by many of the data structures.
