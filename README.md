@@ -59,8 +59,8 @@ type Stack interface {
 The following is the basic Queue interface used by the queue data structures.
 ```go
 type Queue interface {
-	Push(ContainerElement) bool
-	Pop() (ContainerElement, bool)
+	Enqueue(ContainerElement) bool
+	Dequeue() (ContainerElement, bool)
 	
 	Container
 }
