@@ -57,13 +57,13 @@ func (sq *SliceQueue) Remove(item adts.ContainerElement) bool {
 // Stack Methods
 // -------------------------------------------------------
 
-// Push pushes the given element onto the top of the stack.
-func (sq *SliceQueue) Push(item adts.ContainerElement) bool {
+// Enqueue pushes the given element onto the back of the queue.
+func (sq *SliceQueue) Enqueue(item adts.ContainerElement) bool {
 	return sq.Add(item)
 }
 
-// Pop removes the first element from the queue and returns the element.
-func (sq *SliceQueue) Pop() (adts.ContainerElement, bool) {
+// Dequeue removes the element from the head of the queue and returns the element.
+func (sq *SliceQueue) Dequeue() (adts.ContainerElement, bool) {
 	// We want to reuse the Remove method from the SliceContainer class.
 	// The problem is that we need to get the last element in a threadsafe way
 	// (if needed) and then call remove. However, if we lock and then call
